@@ -11,7 +11,14 @@ public class MovementManager : Singleton<MovementManager>
     [SerializeField] private float _waveSpeed = .1f;
 
     public Vector3 waveScale;
-   
+    public Sequence sequence;
+
+    private void Start()
+    {
+        sequence = DOTween.Sequence();
+        DOTween.Init();
+    }
+
     void Update()
     {
         if (StateManager.Instance.State == State.InGame)
@@ -31,17 +38,49 @@ public class MovementManager : Singleton<MovementManager>
             transform.position = newPosition;
 
 
-            for (int i = 1; i < GameManager.Instance.garbages.Count; i++)
+           
+            for (int i = 0; i < GameManager.Instance.garbages.Count; i++)
             {
+                
                 Transform garbage = GameManager.Instance.garbages[i].transform;
-                garbage.DOMoveX(transform.position.x, (i * .2f));
+                sequence.Append(garbage.DOMoveX(transform.position.x, (i * .2f)));
+                
+               
             }
         }
 
     }
 
+    #region Obstacle Stop
+    public void StopMovement(GameObject gameObject)
+    {
+        int index = GameManager.Instance.garbages.IndexOf(gameObject);
+        int turn = GameManager.Instance.garbages.Count - index;
+
+        for (int i = 0; i < turn; i++)
+        {
+            sequence = null;
+            GameObject garbage = GameManager.Instance.garbages[GameManager.Instance.garbages.Count - 1];
+            garbage.transform.SetParent(null);
+            GameManager.Instance.garbages.Remove(garbage);
+            DOTween.KillAll(garbage);
+            sequence = DOTween.Sequence();
+            sequence.Append(garbage.transform.DOMove(new Vector3(garbage.transform.position.x, garbage.transform.position.y, gameObject.transform.position.z + Random.Range(5, 5.25f)), .2f).
+                SetEase(Ease.Flash));
+            sequence.Append(garbage.transform.DOMoveX(Random.Range(-2f, 2f), .1f).
+                SetEase(Ease.OutBounce));
+            GameManager.Instance.GarbageCounter--;
+            Destroy(garbage.GetComponent<Collect>());
+            garbage.transform.tag = "Garbage";
+        }
+
+    }
+    #endregion
+
+
+
     #region Money Wave
-    
+
     public void StartWaveMoney()
     {
         StartCoroutine(WaveMoney());
