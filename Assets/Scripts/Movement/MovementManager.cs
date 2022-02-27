@@ -25,6 +25,7 @@ public class MovementManager : Singleton<MovementManager>
         {
             float _touchXDelta = 0;
             float _newX = 0;
+
             if (Input.GetMouseButton(0))
             {
                 _touchXDelta = Input.GetAxis("Mouse X");
@@ -38,41 +39,57 @@ public class MovementManager : Singleton<MovementManager>
             transform.position = newPosition;
 
 
-           
+
             for (int i = 0; i < GameManager.Instance.garbages.Count; i++)
             {
-                
+
                 Transform garbage = GameManager.Instance.garbages[i].transform;
                 sequence.Append(garbage.DOMoveX(transform.position.x, (i * .2f)));
-                
-               
+
+
             }
         }
 
     }
 
     #region Obstacle Stop
-    public void StopMovement(GameObject gameObject)
+    public void StopMovement(GameObject gameObject, bool slice)
     {
         int index = GameManager.Instance.garbages.IndexOf(gameObject);
         int turn = GameManager.Instance.garbages.Count - index;
 
-        for (int i = 0; i < turn; i++)
+        GameObject obstacleEfect =Instantiate(GameManager.Instance.obstacleEfekts);
+        obstacleEfect.transform.position = gameObject.transform.position;
+        
+        GameManager.Instance.GarbageCounter--;
+        GameManager.Instance.garbages.Remove(gameObject);
+        gameObject.transform.SetParent(null);
+        gameObject.SetActive(false);
+
+        if (slice)
         {
-            sequence = null;
-            GameObject garbage = GameManager.Instance.garbages[GameManager.Instance.garbages.Count - 1];
-            garbage.transform.SetParent(null);
-            GameManager.Instance.garbages.Remove(garbage);
-            DOTween.KillAll(garbage);
-            sequence = DOTween.Sequence();
-            sequence.Append(garbage.transform.DOMove(new Vector3(garbage.transform.position.x, garbage.transform.position.y, gameObject.transform.position.z + Random.Range(5, 5.25f)), .2f).
-                SetEase(Ease.Flash));
-            sequence.Append(garbage.transform.DOMoveX(Random.Range(-2f, 2f), .1f).
-                SetEase(Ease.OutBounce));
-            GameManager.Instance.GarbageCounter--;
-            Destroy(garbage.GetComponent<Collect>());
-            garbage.transform.tag = "Garbage";
+            for (int i = 1; i < turn; i++)
+            {
+                sequence = null;
+                GameObject garbage = GameManager.Instance.garbages[GameManager.Instance.garbages.Count - 1];
+                garbage.transform.SetParent(null);
+                GameManager.Instance.garbages.Remove(garbage);
+                DOTween.KillAll(garbage);
+                sequence = DOTween.Sequence();
+                sequence.Append(garbage.transform.DOMove(new Vector3(garbage.transform.position.x, garbage.transform.position.y, gameObject.transform.position.z + Random.Range(5, 5.25f)), .2f).
+                    SetEase(Ease.Flash));
+                sequence.Append(garbage.transform.DOMoveX(Random.Range(-2f, 2f), .1f).
+                    SetEase(Ease.OutBounce));
+                GameManager.Instance.GarbageCounter--;
+                
+                Destroy(garbage.GetComponent<Collect>());
+                garbage.transform.tag = "Garbage";
+            }
         }
+
+
+
+
 
     }
     #endregion
@@ -85,7 +102,7 @@ public class MovementManager : Singleton<MovementManager>
     {
         StartCoroutine(WaveMoney());
     }
-    
+
     IEnumerator WaveMoney()
     {
         for (int i = 0; i < GameManager.Instance.garbages.Count; i++)

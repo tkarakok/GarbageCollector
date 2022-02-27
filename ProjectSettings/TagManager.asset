@@ -6,6 +6,10 @@ TagManager:
   tags:
   - Garbage
   - Obstacle
+  - Recycle
+  - Converter
+  - Slice
+  - RecycleBox
   layers:
   - Default
   - TransparentFX
